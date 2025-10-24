@@ -4,8 +4,11 @@ library(jsonlite)
 library(httr)
 
 
-
-gamecode <- ronda_df %>% 
+gamecode <-read_csv(
+  "https://raw.githubusercontent.com/IvoVillanueva/Euroleague-boxscores/refs/heads/main/gamecodes/gamecodes_2025-26.csv",
+  show_col_types = FALSE,
+  progress = FALSE
+) %>% 
   arrange(round, gamecode, date)%>% 
   filter(date < today(tzone = "Europe/Madrid")) %>% 
   pull(gamecode)
