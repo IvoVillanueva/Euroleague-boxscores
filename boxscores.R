@@ -6,29 +6,11 @@
 library(tidyverse)
 library(jsonlite)
 library(httr)
-library(httr2)
-
-
-ronda_fn <- function(ronda) {
-  df <- paste0("https://feeds.incrowdsports.com/provider/euroleague-feeds/v2/competitions/E/seasons/E2025/games?teamCode=&phaseTypeCode=RS&roundNumber=", ronda) %>%
-    httr::GET(query = list()) %>%
-    httr::content() %>%
-    purrr::pluck("data") %>%
-    dplyr::tibble(value = .) %>%
-    tidyr::unnest_wider(value) %>%
-    tidyr::unnest_wider(round) %>%
-    tidyr::unnest_wider(confirmedDate, names_sep = "_") %>%
-    transmute(jornada = round, gamecode = code, date = lubridate::with_tz(lubridate::ymd_hms(date), "Europe/Madrid"))
-}
-
-ronda_df <- map_df(1:38, ronda_fn)
-
-write_csv(ronda_df, here::here("substack/boxScoreEuroligue/csv/gamecodes_2025-26.csv"))
-
 
 #######################################################################################################################################################
 ################################ GAMESCODES  ##########################################################################################################
 #######################################################################################################################################################
+
 
 gamecode <- read_csv(
   "https://raw.githubusercontent.com/IvoVillanueva/Euroleague-boxscores/refs/heads/main/gamecodes/gamecodes_2025-26.csv",
@@ -97,26 +79,3 @@ boxscores_fn <- function(gamecode) {
 
 boxscores_df <- map_df(gamecode, boxscores_fn)
 
-glimpse(boxscores_df)
-
-#######################################################################################################################################################
-################################ libreria euroliga ####################################################################################################
-#######################################################################################################################################################
-
-
-library(euroleaguer)
-
-bx <- getGameBoxScore(season_code = "E2025", game_code = 4)
-players <- bx$PlayerStats # boxscore por jugador
-teams <- bx$TeamStats # boxscore por equipo
-
-
-# obtener los códigos de partido de esa jornada
-gms <- getCompetitionGames(season_code = "E2025", round = 1)
-codes <- gms$GameCode
-
-# descargar boxscores y apilar
-bxs <- map(codes, ~ getGameBoxScore("E2025", .x))
-
-players_round <- map2_dfr(codes, bxs, ~ .y$PlayerStats %>% mutate(game_code = .x))
-teams_round <- map2_dfr(codes, bxs, ~ .y$TeamStats %>% mutate(game_code = .x))
